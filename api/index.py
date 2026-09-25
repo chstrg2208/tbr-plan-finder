@@ -140,7 +140,7 @@ def api_best_zips(state, h, a, income, issuer_filter=None):
         results.append({
             'county':cty,
             'cities':sorted(list(geo['cities']))[:3] if geo else [],
-            'sample_zips':geo['zips'][:5] if geo else [],
+            'all_zips':geo['zips'] if geo else [],
             'total_zips':len(geo['zips']) if geo else 0,
             'slcsp_base':round(slcsp,2), 'aptc':round(aptc,2),
             'best_silver':{'issuer':bs['issuer'],'plan':bs['plan'],'type':bs['type'],
@@ -260,8 +260,9 @@ body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#222}
 .simple-table tr:hover{background:#f8fafc}
 .simple-table tr.top{background:#f0fdf4}
 
-.zip-pill{display:inline-block;background:#f1f5f9;padding:2px 7px;border-radius:4px;font-family:monospace;font-size:.82rem;font-weight:700;color:#334155;margin:1px;cursor:pointer}
-.zip-pill:hover{background:#2563eb;color:#fff}
+.zip-box{display:flex;flex-wrap:wrap;gap:4px;max-width:340px;padding:2px 0}
+.zip-pill{display:inline-block;background:#f1f5f9;border:1px solid #cbd5e1;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.8rem;font-weight:700;color:#334155;margin:1px;cursor:pointer;transition:.15s}
+.zip-pill:hover{background:#2563eb;color:#fff;border-color:#2563eb}
 
 /* RESPONSIVE */
 @media(max-width:768px){
@@ -579,9 +580,8 @@ async function doBest(){
           APTC: <span class="tag tag-green">+$${r.aptc.toFixed(0)}</span>
           &nbsp; SLCSP: $${r.slcsp_base}/người
         </div>
-        <div style="margin-top:6px">
-          ${r.sample_zips.map(z=>'<span class="zip-pill" onclick="clickZip(\''+z+'\','+h+','+a+','+inc+')">'+z+'</span>').join(' ')}
-          ${r.total_zips>5?'<small style="color:#888"> +'+String(r.total_zips-5)+'</small>':''}
+        <div style="margin-top:8px" class="zip-box">
+          ${(r.all_zips||[]).map(z=>'<span class="zip-pill" onclick="clickZip(\''+z+'\','+h+','+a+','+inc+')">'+z+'</span>').join('')}
         </div>
       </div>
     </div>`;
@@ -592,14 +592,14 @@ async function doBest(){
   if(d.results.length>3){
     html+='<div class="section-hdr" style="margin-top:24px"><span class="emoji">📊</span> BẢNG ĐẦY ĐỦ — '+d.results.length+' quận</div>';
     html+='<div class="form-box" style="padding:12px 16px"><input type="text" id="filterBest" oninput="filterBestT()" placeholder="🔎 Lọc nhanh: gõ zip, thành phố, hoặc hãng..." style="width:100%;padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:.88rem"></div>';
-    html+='<div class="form-box" style="padding:0;overflow-x:auto"><table class="simple-table"><thead><tr><th>#</th><th>Quận / Thành phố</th><th>Zipcode</th><th>Hãng rẻ nhất (Silver)</th><th>Khách trả</th><th>Bronze</th><th>APTC</th></tr></thead><tbody id="bestBody">';
+    html+='<div class="form-box" style="padding:0;overflow-x:auto"><table class="simple-table"><thead><tr><th>#</th><th>Quận / Thành phố</th><th>Toàn Bộ Zipcode</th><th>Hãng rẻ nhất (Silver)</th><th>Khách trả</th><th>Bronze</th><th>APTC</th></tr></thead><tbody id="bestBody">';
     d.results.forEach((r,i)=>{
       const s=r.best_silver;const b=r.best_bronze;
       const cls=s?priceClass(s.net):'';
       html+=`<tr class="${i<3?'top':''}">
         <td style="font-weight:800;color:${i<3?'#059669':'#888'}">${i+1}</td>
         <td><div style="font-weight:700">${r.cities.join(', ')||r.county}</div><div style="font-size:.75rem;color:#888">${r.county} County</div></td>
-        <td>${r.sample_zips.map(z=>'<span class="zip-pill" onclick="clickZip(\''+z+'\','+h+','+a+','+inc+')">'+z+'</span>').join(' ')}${r.total_zips>5?' <small>+'+String(r.total_zips-5)+'</small>':''}</td>
+        <td><div class="zip-box">${(r.all_zips||[]).map(z=>'<span class="zip-pill" onclick="clickZip(\''+z+'\','+h+','+a+','+inc+')">'+z+'</span>').join('')}</div></td>
         <td>${s?'<div style="font-weight:700;font-size:.85rem">'+s.issuer+'</div><div style="font-size:.75rem;color:#888">'+s.plan+'</div>':'-'}</td>
         <td><span class="pc-net ${cls}" style="font-size:1.05rem">${s?fmtBig(s.net):'-'}</span></td>
         <td>${b?'<span style="font-weight:700">'+fmt(b.net)+'</span>':'-'}</td>
